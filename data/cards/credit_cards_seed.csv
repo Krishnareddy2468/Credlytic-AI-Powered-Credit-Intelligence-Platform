@@ -1,0 +1,32 @@
+bank,name,network,joining_fee,annual_fee,min_monthly_income,min_credit_score
+HDFC,Millennia,Visa,1000,1000,35000,700
+HDFC,Regalia,Visa,2500,2500,100000,750
+HDFC,Regalia Gold,Visa,2500,2500,120000,760
+HDFC,Infinia,Visa,12500,12500,300000,800
+HDFC,MoneyBack+,RuPay,500,500,25000,680
+HDFC,Diners ClubMiles,Diners,1000,1000,45000,720
+ICICI,Amazon Pay,Visa,0,0,25000,700
+ICICI,Coral,Mastercard,500,500,30000,690
+ICICI,Rubyx,Visa,3000,2000,75000,730
+ICICI,Sapphiro,Amex,6500,3500,150000,760
+ICICI,Emeralde,Visa,12000,12000,250000,790
+SBI,SimplyCLICK,Visa,499,499,25000,680
+SBI,SimplySAVE,Mastercard,499,499,22000,670
+SBI,Cashback,Visa,999,999,35000,710
+SBI,PRIME,Visa,2999,2999,60000,730
+SBI,Elite,Visa,4999,4999,125000,760
+Axis,Ace,Visa,499,499,30000,700
+Axis,Flipkart,Mastercard,500,500,25000,690
+Axis,My Zone,Visa,500,500,20000,670
+Axis,Magnus,Visa,12500,12500,250000,780
+Axis,Privilege,Visa,1500,1500,50000,720
+Kotak,811,RuPay,0,0,20000,650
+Kotak,League Platinum,Visa,499,499,30000,680
+Kotak,Royale Signature,Visa,999,999,50000,710
+Amex,Gold,Amex,4500,4500,60000,730
+RBL,ShopRite,Mastercard,500,500,25000,670
+IndusInd,Legend,Visa,9999,0,125000,750
+IDFC FIRST,Select,Visa,0,0,50000,720
+IDFC FIRST,Wealth,Visa,0,0,150000,760
+AU Bank,LIT,Visa,999,999,40000,700
+HSBC,Cashback,Visa,999,999,40000,710
