@@ -96,3 +96,32 @@ export const creditCards: CreditCardProduct[] = [
 ];
 
 export const cardFilters = ["All cards", "Cashback", "Travel", "Lounge", "Amazon", "Dining", "Fuel", "Zero fee", "Premium"];
+
+export type CardDiscoveryDetail = {
+  recommendation?: string;
+  bestFor: string;
+  summary: string;
+  benefitSignals: string[];
+  tradeoff: string;
+  feeNote: string;
+  lastVerifiedAt: string;
+};
+
+export const cardDiscoveryDetails: Record<string, CardDiscoveryDetail> = {
+  "amazon-pay-icici": { recommendation: "Best overall fit", bestFor: "Amazon + online shopping", summary: "High value for your online spending without an annual fee.", benefitSignals: ["5% Amazon", "No annual fee"], tradeoff: "Limited premium travel benefits.", feeNote: "No annual fee", lastVerifiedAt: "Aug 2026" },
+  "axis-ace": { recommendation: "Best everyday cashback", bestFor: "Utilities + everyday spending", summary: "Balanced cashback value across bills and general spend.", benefitSignals: ["Utility cashback", "Lounge access"], tradeoff: "Less valuable for heavy travel spending.", feeNote: "Waiver requires qualifying spend", lastVerifiedAt: "Aug 2026" },
+  "hdfc-regalia-gold": { recommendation: "Best travel value", bestFor: "Travel + premium benefits", summary: "Higher potential travel value, but your current profile is a weaker match.", benefitSignals: ["Lounge access", "2% forex markup"], tradeoff: "Higher annual fee and weaker current profile match.", feeNote: "Premium annual fee", lastVerifiedAt: "Aug 2026" },
+  "sbi-cashback": { bestFor: "Online cashback", summary: "Broad online cashback value with fewer merchant-specific rules.", benefitSignals: ["5% online", "Statement credit"], tradeoff: "Excluded categories and cashback caps apply.", feeNote: "Annual fee applies", lastVerifiedAt: "Aug 2026" }
+};
+
+export const cardsDiscoveryCategories = ["For you", "Cashback", "Travel", "Everyday spend", "No annual fee", "Premium"];
+
+export const savedSpendingProfile = {
+  monthlyTotal: 58000,
+  breakdown: [
+    { label: "Online shopping", shortValue: "₹20K" },
+    { label: "Travel", shortValue: "₹10K" },
+    { label: "Groceries", shortValue: "₹8K" },
+    { label: "Dining", shortValue: "₹6K" }
+  ]
+};

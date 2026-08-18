@@ -17,7 +17,7 @@ The current Credlytic landing page is the visual reference implementation. Futur
 - Corporate tagline: `Credit analytics, powered by AI.`
 - Consumer promise: `Know your odds before you apply.`
 - Primary CTA: `Check my eligibility`
-- Secondary CTA: `Explore cards`
+- Secondary CTA: `Explore`
 - Trust phrase: `No hard inquiry · No credit-score impact`
 
 Do not display every line of the hierarchy at once. The consumer promise leads marketing experiences. Product interfaces prioritize the user's current decision and next action.

@@ -42,7 +42,7 @@ export function ProgressBar({ value, tone = "blue", label }: { value: number; to
 }
 
 export function MatchBadge({ status }: { status: MatchStatus }) {
-  const tone = status === "Strong match" ? "success" : status === "Good match" ? "blue" : status === "Borderline" ? "warning" : "muted";
+  const tone = status === "Strong match" ? "success" : status === "Good match" ? "blue" : "warning";
   return <span className={`status-badge status-${tone}`}>{status}</span>;
 }
 

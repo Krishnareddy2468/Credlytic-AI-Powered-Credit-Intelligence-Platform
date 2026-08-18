@@ -31,7 +31,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
-export function ProductShell({ title, subtitle, eyebrow, actions, advisorContext: advisorContextOverride, children }: { title: string; subtitle: string; eyebrow?: string; actions?: React.ReactNode; advisorContext?: AdvisorPageContext; children: React.ReactNode }) {
+export function ProductShell({ title, subtitle, eyebrow, actions, compactHeader = false, profileCompletion = 86, searchPlaceholder = "Search cards, policies, or guidance", advisorContext: advisorContextOverride, children }: { title: string; subtitle: string; eyebrow?: string; actions?: React.ReactNode; compactHeader?: boolean; profileCompletion?: number; searchPlaceholder?: string; advisorContext?: AdvisorPageContext; children: React.ReactNode }) {
   const pathname = usePathname();
   const advisorContext = advisorContextOverride ?? getAdvisorContext(pathname);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -83,17 +83,17 @@ export function ProductShell({ title, subtitle, eyebrow, actions, advisorContext
 
         <Link className="sidebar-user" href="/profile">
           <span className="user-avatar">MS</span>
-          <span><strong>Meera Shah</strong><small>Profile 86% complete</small></span>
+          <span><strong>Meera Shah</strong><small>Profile {profileCompletion}% complete</small></span>
         </Link>
       </aside>
       {menuOpen ? <button aria-label="Close navigation overlay" className="sidebar-scrim" onClick={() => setMenuOpen(false)} type="button" /> : null}
 
       <section className="app-main">
-        <header className="app-topbar">
+        <header className={`app-topbar ${compactHeader ? "app-topbar-with-title" : ""}`}>
           <button aria-label="Open navigation" className="mobile-menu" onClick={() => setMenuOpen(true)} type="button"><Menu /></button>
-          <div className="global-search"><Search aria-hidden="true" /><span>Search cards or ask Credlytic</span><kbd>⌘ K</kbd></div>
+          {compactHeader ? <div className="topbar-page-title"><strong>{title}</strong><span>{subtitle}</span></div> : null}
+          <div className="global-search"><Search aria-hidden="true" /><span>{searchPlaceholder}</span><kbd>⌘ K</kbd></div>
           <div className="topbar-actions">
-            <span className="mock-indicator">Demo workspace</span>
             <button aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} className="icon-button" onClick={toggleTheme} title={`Use ${theme === "dark" ? "light" : "dark"} theme`} type="button">
               {theme === "dark" ? <Sun /> : <Moon />}
             </button>
@@ -102,14 +102,14 @@ export function ProductShell({ title, subtitle, eyebrow, actions, advisorContext
         </header>
 
         <div className="page-canvas">
-          <header className="page-intro">
+          {!compactHeader ? <header className="page-intro">
             <div>
               {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
               <h1>{title}</h1>
               <p>{subtitle}</p>
             </div>
             {actions ? <div className="page-actions">{actions}</div> : null}
-          </header>
+          </header> : actions ? <div className="compact-page-actions">{actions}</div> : null}
           {children}
         </div>
       </section>

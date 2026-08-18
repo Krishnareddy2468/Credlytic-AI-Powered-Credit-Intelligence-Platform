@@ -41,7 +41,7 @@ export default function Home() {
         </Link>
         <nav aria-label="Main navigation">
           <Link href="#intelligence">How it works</Link>
-          <Link href="/cards">Explore cards</Link>
+          <Link href="/cards">Explore</Link>
           <Link href="#trust">Security</Link>
         </nav>
         <div className="landing-nav-actions">
@@ -57,7 +57,7 @@ export default function Home() {
           <p>Credlytic ranks credit cards by your approval likelihood and real value, explains what affects your match using current bank policy, and shows what to improve before you apply.</p>
           <div className="hero-actions">
             <Link className="button button-primary" href="/onboarding">Check my eligibility<ArrowRight /></Link>
-            <Link className="button button-secondary" href="/cards">Explore cards</Link>
+            <Link className="button button-secondary" href="/cards">Explore</Link>
           </div>
           <p className="hero-disclaimer"><LockKeyhole aria-hidden="true" /> No hard inquiry · No credit-score impact</p>
         </div>
@@ -200,7 +200,7 @@ export default function Home() {
           <span className="final-mark"><BarChart3 /></span>
           <h2>Make your next credit decision with context.</h2>
           <p>Start with a private sample profile. No hard inquiry · No credit-score impact.</p>
-          <div><Link className="button button-primary" href="/onboarding">Check my eligibility<ArrowRight /></Link><Link className="button button-secondary" href="/cards">Explore cards</Link></div>
+          <div><Link className="button button-primary" href="/onboarding">Check my eligibility<ArrowRight /></Link><Link className="button button-secondary" href="/cards">Explore</Link></div>
         </div>
       </section>
 
