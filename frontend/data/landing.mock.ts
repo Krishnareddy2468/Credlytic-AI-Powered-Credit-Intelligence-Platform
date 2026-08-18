@@ -199,3 +199,16 @@ export const landingTrustPoints = [
     copy: "Every policy claim shows its source document and the date it was last reviewed."
   }
 ] as const;
+
+export interface SignInHighlight {
+  value: string;
+  label: string;
+}
+
+/** Four short proof columns for the sign-in aside. */
+export const signInHighlights: SignInHighlight[] = [
+  { value: "0 inquiries", label: "Bureau-safe check" },
+  { value: "34 cards", label: "Ranked for you" },
+  { value: "9 issuers", label: "Policy tracked" },
+  { value: "₹14,400", label: "Sample value" }
+];

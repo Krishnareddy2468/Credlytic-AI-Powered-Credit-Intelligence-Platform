@@ -49,3 +49,28 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Checks:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+## Deployment
+
+The frontend deploys to Vercel with **Root Directory set to `frontend`**, and
+needs no environment variables — it runs on typed mock data. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## Brand assets
+
+Every logo asset (mark, wordmark, lockup, favicons, social card) is generated
+from `Credlytic Logo1.png`:
+
+```bash
+python3 docs/brand/generate-brand-assets.py
+```
+
+See [docs/brand/README.md](docs/brand/README.md).

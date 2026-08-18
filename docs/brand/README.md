@@ -3,11 +3,12 @@
 Source artwork: `Credlytic Logo1.png` (repo root) — a 1536x1024 flat raster with a
 near-black background at varying alpha.
 
-`generate-brand-assets.py` derives every shipped asset from it. Run from
-`frontend/`:
+`generate-brand-assets.py` derives every shipped asset from it. It decodes the
+PNG in pure Python — no third-party dependencies — and resolves paths relative
+to the repo, so it runs from anywhere:
 
 ```sh
-python3 ../docs/brand/generate-brand-assets.py
+python3 docs/brand/generate-brand-assets.py
 ```
 
 Outputs:
@@ -19,6 +20,7 @@ Outputs:
 | `frontend/public/brand/lockup.png` | 705x200 | full lockup incl. baked tagline |
 | `frontend/app/icon.png` | 128x128 | favicon (transparent) |
 | `frontend/app/apple-icon.png` | 180x180 | touch icon (plated, inset) |
+| `frontend/app/opengraph-image.png` | 1200x630 | social card |
 
 ## How it works
 

@@ -16,3 +16,10 @@ coverage/
 backend/app.db
 ml/artifacts/*
 !ml/artifacts/.gitkeep
+
+# Build artefacts
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel

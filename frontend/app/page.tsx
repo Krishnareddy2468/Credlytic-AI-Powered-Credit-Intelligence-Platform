@@ -16,11 +16,11 @@ import {
   Sparkles,
   TrendingUp
 } from "lucide-react";
-import { BrandLockup } from "@/components/landing/brand-lockup";
 import { EligibilityOrbit } from "@/components/landing/eligibility-orbit";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingProductPreview } from "@/components/landing/product-preview";
 import { LandingSectionHead } from "@/components/landing/section-head";
+import { SiteFooter } from "@/components/landing/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import {
   landingAdvisorExchange,
@@ -338,21 +338,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="landing-footer">
-        <div className="landing-container landing-footer-inner">
-          <div className="landing-footer-brand">
-            <Link aria-label="Credlytic home" href="/">
-              <BrandLockup size="footer" />
-            </Link>
-          </div>
-          <p>Prototype experience · Not financial advice · Issuer approval remains final</p>
-          <nav aria-label="Footer">
-            <Link href="/settings">Privacy</Link>
-            <Link href="/settings">Terms</Link>
-            <Link href="/login">Sign in</Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

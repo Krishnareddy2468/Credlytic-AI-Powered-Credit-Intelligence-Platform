@@ -41,24 +41,6 @@
 .hero-proof { animation-delay: 240ms; }
 
 /* Brand mark ------------------------------------------------------------- */
-/* Brand lockup ------------------------------------------------------------
-   Source geometry (measured from the artwork):
-     gap mark->wordmark = 0.171 x mark height
-     wordmark height    = 0.632 x mark height
-     wordmark and tagline share identical left/right edges (flush)
-   The tagline is live text because at 0.090 x mark height the source raster
-   renders under 5px in a header. Rules flex from zero width so the tagline row
-   can never force the column wider than the wordmark, which is what keeps the
-   two flush and the wordmark hard against the mark's gap. */
-.brand-lockup { --lockup-mark: 60px; display: inline-flex; align-items: center; gap: calc(var(--lockup-mark) * 0.171); }
-.brand-lockup-mark { width: auto; height: var(--lockup-mark); flex: 0 0 auto; }
-.brand-lockup-text { display: flex; align-items: flex-start; flex-direction: column; }
-.brand-lockup-wordmark { width: auto; height: calc(var(--lockup-mark) * 0.632); }
-.brand-lockup-tagline { display: flex; align-self: stretch; align-items: center; gap: 7px; margin-top: calc(var(--lockup-mark) * 0.10); }
-.brand-lockup-tagline i { height: 1px; min-width: 0; flex: 1 1 0; background: linear-gradient(90deg, transparent, rgb(var(--cl-cyan) / 0.85)); }
-.brand-lockup-tagline i:last-child { background: linear-gradient(90deg, rgb(var(--cl-cyan) / 0.85), transparent); }
-.brand-lockup-tagline b { color: #ced9e6; font-size: 0.47rem; font-weight: 600; letter-spacing: 0.14em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
-
 /* Condensed header: shrink the lockup and the tagline together so the row stays
    inside the wordmark width. */
 .landing-header[data-condensed="true"] .brand-lockup { --lockup-mark: 48px; }

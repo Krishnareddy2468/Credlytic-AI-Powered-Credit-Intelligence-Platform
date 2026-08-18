@@ -1,14 +1,75 @@
-"""Regenerate the Credlytic wordmark/lockup with a dimensional 'l' and 'i' tittle.
+"""Regenerate every Credlytic brand asset from the source artwork.
 
-The 'l' stem and the tittle are repainted with the icon's own gradient ramp and
-lit from the upper-left, matching the mark's 3D treatment. Each pixel keeps its
-ORIGINAL coverage, so glyph shapes and antialiasing are untouched — only colour
-is substituted.
+Run from the repo root or anywhere:
+
+    python3 docs/brand/generate-brand-assets.py
+
+Decodes the source PNG in pure Python (no third-party deps), keys out its
+near-black background, and writes the mark, wordmark, lockup, favicons and the
+social card. The 'l' stem and the 'i' tittle are repainted with the icon's own
+gradient and lit from the upper-left; each pixel keeps its ORIGINAL coverage so
+glyph shapes and antialiasing are unchanged.
 """
-import pickle, zlib, struct, math
+import zlib, struct, math, pathlib
 
-SCRATCH = "/private/tmp/claude-501/-Users-krishnareddy--my-Projects-credlytic/4b38c249-8a07-4785-ad6f-c0facc15df34/scratchpad"
-w, h, rows = pickle.load(open(f"{SCRATCH}/logo.pkl", "rb"))
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+SOURCE = ROOT / "Credlytic Logo1.png"
+FRONTEND = ROOT / "frontend"
+
+
+def decode_png(path):
+    """Minimal 8-bit RGBA non-interlaced PNG decoder."""
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", f"not a PNG: {path}"
+    pos, idat, meta = 8, bytearray(), {}
+    while pos < len(data):
+        ln = struct.unpack(">I", data[pos:pos + 4])[0]
+        typ = data[pos + 4:pos + 8]
+        body = data[pos + 8:pos + 8 + ln]
+        if typ == b"IHDR":
+            w, h, depth, ctype, _c, _f, interlace = struct.unpack(">IIBBBBB", body)
+            meta = dict(w=w, h=h, depth=depth, ctype=ctype, interlace=interlace)
+        elif typ == b"IDAT":
+            idat += body
+        elif typ == b"IEND":
+            break
+        pos += 12 + ln
+    assert meta["ctype"] == 6 and meta["depth"] == 8 and meta["interlace"] == 0, \
+        f"expected 8-bit RGBA non-interlaced, got {meta}"
+
+    w, h = meta["w"], meta["h"]
+    raw = zlib.decompress(bytes(idat))
+    bpp, stride = 4, w * 4
+    rows, prev, p = [], bytearray(stride), 0
+    for _ in range(h):
+        f = raw[p]; p += 1
+        line = bytearray(raw[p:p + stride]); p += stride
+        if f == 1:
+            for i in range(bpp, stride):
+                line[i] = (line[i] + line[i - bpp]) & 255
+        elif f == 2:
+            for i in range(stride):
+                line[i] = (line[i] + prev[i]) & 255
+        elif f == 3:
+            for i in range(stride):
+                a = line[i - bpp] if i >= bpp else 0
+                line[i] = (line[i] + ((a + prev[i]) >> 1)) & 255
+        elif f == 4:
+            for i in range(stride):
+                a = line[i - bpp] if i >= bpp else 0
+                b = prev[i]
+                c = prev[i - bpp] if i >= bpp else 0
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                line[i] = (line[i] + pr) & 255
+        rows.append(line); prev = line
+    return w, h, rows
+
+
+print(f"decoding {SOURCE.name} ...")
+w, h, rows = decode_png(SOURCE)
+print(f"  {w}x{h}")
+
 FLOOR, CEIL = 30.0, 52.0
 
 MARK = (195, 334, 517, 654)
@@ -159,23 +220,32 @@ def square_icon(out, inset, plate=None):
 
 if __name__ == "__main__":
     ow, oh, lines = render(MARK, 160)
-    print(f"mark.png     {ow}x{oh}: {write_png('public/brand/mark.png', ow, oh, lines)} bytes")
-    print(f"icon.png     128x128: {write_png('app/icon.png', 128, 128, square_icon(128, 0.10))} bytes")
-    print(f"apple-icon   180x180: {write_png('app/apple-icon.png', 180, 180, square_icon(180, 0.34, plate=(5, 12, 22)))} bytes")
+    print(f"mark.png     {ow}x{oh}: {write_png(FRONTEND / 'public/brand/mark.png', ow, oh, lines)} bytes")
+    print(f"icon.png     128x128: {write_png(FRONTEND / 'app/icon.png', 128, 128, square_icon(128, 0.10))} bytes")
+    print(f"apple-icon   180x180: {write_png(FRONTEND / 'app/apple-icon.png', 180, 180, square_icon(180, 0.34, plate=(5, 12, 22)))} bytes")
     ow, oh, lines = render(WORD, 128)
-    print(f"wordmark.png {ow}x{oh}: {write_png('public/brand/wordmark.png', ow, oh, lines)} bytes")
+    print(f"wordmark.png {ow}x{oh}: {write_png(FRONTEND / 'public/brand/wordmark.png', ow, oh, lines)} bytes")
     ow, oh, lines = render(FULL, 200)
-    print(f"lockup.png   {ow}x{oh}: {write_png('public/brand/lockup.png', ow, oh, lines)} bytes")
-    # Large preview on the brand surface
-    ow, oh, lines = render(WORD, 300)
-    pv = []
-    for ty in range(oh):
+    print(f"lockup.png   {ow}x{oh}: {write_png(FRONTEND / 'public/brand/lockup.png', ow, oh, lines)} bytes")
+    # Social card: the full lockup (tagline included) centred on the brand surface.
+    OG_W, OG_H = 1200, 630
+    ow, oh, art = render(FULL, 216)          # ~761x216, sized to sit comfortably in 1200x630
+    ax, ay = (OG_W - ow) // 2, (OG_H - oh) // 2
+    og = []
+    for y in range(OG_H):
         line = bytearray()
-        for tx in range(ow):
-            o = tx*4
-            r,g,b,a = lines[ty][o], lines[ty][o+1], lines[ty][o+2], lines[ty][o+3]
-            f = a/255
-            line += bytes(tuple(round(c*f + p*(1-f)) for c,p in zip((r,g,b),(3,7,13))) + (255,))
-        pv.append(line)
-    write_png(f"{SCRATCH}/style-preview.png", ow, oh, pv)
-    print("preview written")
+        row = art[y - ay] if 0 <= y - ay < oh else None
+        for x in range(OG_W):
+            # Brand background with a soft radial lift behind the lockup.
+            dx, dy = (x - OG_W * 0.5) / (OG_W * 0.62), (y - OG_H * 0.46) / (OG_H * 0.7)
+            glow = max(0.0, 1.0 - (dx * dx + dy * dy)) ** 2
+            base = [3 + 11 * glow, 7 + 24 * glow, 13 + 42 * glow]
+            sx = x - ax
+            if row is not None and 0 <= sx < ow:
+                o = sx * 4
+                r, g, b, a = row[o], row[o + 1], row[o + 2], row[o + 3]
+                f = a / 255
+                base = [c * f + pb * (1 - f) for c, pb in zip((r, g, b), base)]
+            line += bytes(tuple(min(255, max(0, round(c))) for c in base) + (255,))
+        og.append(line)
+    print(f"opengraph    {OG_W}x{OG_H}: {write_png(FRONTEND / 'app/opengraph-image.png', OG_W, OG_H, og)} bytes")

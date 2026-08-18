@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { BrandLockup } from "@/components/landing/brand-lockup";
 
+// Root-relative anchors, not bare hashes: these must also resolve from /about.
 const navLinks = [
-  { href: "#intelligence", label: "How it works" },
-  { href: "/cards", label: "Explore cards" },
-  { href: "#advisor", label: "Advisor" },
-  { href: "#trust", label: "Security" }
+  { href: "/#intelligence", label: "How it works" },
+  { href: "/login?next=/dashboard", label: "Dashboard" },
+  { href: "/#advisor", label: "Advisor" },
+  { href: "/about", label: "About" }
 ];
 
 /**
