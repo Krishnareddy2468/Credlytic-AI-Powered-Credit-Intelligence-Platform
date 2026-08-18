@@ -50,12 +50,21 @@ export function StatusBadge({ children, tone = "blue" }: { children: React.React
   return <span className={`status-badge status-${tone}`}>{children}</span>;
 }
 
-export function CreditCardVisual({ bank, name, network, tone = "ink", compact = false }: { bank: string; name: string; network: string; tone?: CardTone; compact?: boolean }) {
+/**
+ * Illustrative card face. Internals are sized in container-query units, so a
+ * single component reads correctly from a 52px list thumbnail to a 260px hero
+ * node without the chip colliding with the foot text.
+ *
+ * `meta` carries decision-relevant metadata (fee, tier). It intentionally
+ * replaces a masked card number: these are cards a user is *considering*, and
+ * showing digits would imply they already hold the card.
+ */
+export function CreditCardVisual({ bank, name, network, tone = "ink", compact = false, meta }: { bank: string; name: string; network: string; tone?: CardTone; compact?: boolean; meta?: string }) {
   return (
     <div className={`credit-card-visual card-tone-${tone} ${compact ? "credit-card-compact" : ""}`} aria-label={`${bank} ${name} card illustration`} role="img">
-      <div className="credit-card-head"><span>{bank}</span><span className="card-contactless">)))</span></div>
-      <div className="credit-card-chip" />
-      <div className="credit-card-foot"><div><strong>{name}</strong><span>•••• 4826</span></div><b>{network}</b></div>
+      <div className="credit-card-head"><span>{bank}</span><span className="card-contactless" aria-hidden="true">)))</span></div>
+      <div className="credit-card-chip" aria-hidden="true" />
+      <div className="credit-card-foot"><div><strong>{name}</strong>{meta ? <span>{meta}</span> : null}</div><b>{network}</b></div>
     </div>
   );
 }
