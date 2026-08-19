@@ -1,39 +1,38 @@
 import type { Metadata, Viewport } from "next";
-import { siteUrl } from "@/lib/site";
+import { SITE_LOCALE, SITE_NAME, SITE_URL, absoluteUrl, isIndexableEnv } from "@/lib/seo";
 import "./globals.css";
 
-const title = "Credlytic | Credit intelligence for better decisions";
-const description =
-  "Understand credit-card eligibility, compare personal value, and improve your credit position before you apply — with no hard inquiry.";
+/**
+ * Homepage title. Establishes the entity ("Credlytic"), the category
+ * ("credit card eligibility / credit intelligence") and the market ("India"),
+ * which is what the homepage needs to rank for as a brand+category page.
+ */
+const homeTitle = "Credlytic — Credit Card Eligibility & Credit Intelligence India";
+const homeDescription =
+  "Check credit card eligibility before you apply — no hard inquiry. Compare cards by personal value, understand issuer policy, and see what to improve first.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: title,
-    template: "%s | Credlytic"
+    default: homeTitle,
+    template: `%s | ${SITE_NAME}`
   },
-  description,
-  applicationName: "Credlytic",
-  keywords: ["credit card eligibility", "credit intelligence", "credit score", "India", "card comparison"],
-  alternates: { canonical: "/" },
+  description: homeDescription,
+  applicationName: SITE_NAME,
   openGraph: {
     type: "website",
-    siteName: "Credlytic",
-    title,
-    description,
-    url: "/",
-    locale: "en_IN"
+    siteName: SITE_NAME,
+    locale: SITE_LOCALE,
+    title: homeTitle,
+    description: homeDescription,
+    url: absoluteUrl("/")
   },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" }
-  }
+  twitter: { card: "summary_large_image", title: homeTitle, description: homeDescription },
+  // Preview deployments must not be indexed; the *.vercel.app host would
+  // otherwise compete with credlytic.in for the same content.
+  robots: isIndexableEnv
+    ? { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } }
+    : { index: false, follow: false }
 };
 
 export const viewport: Viewport = {
@@ -43,13 +42,9 @@ export const viewport: Viewport = {
   initialScale: 1
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <body>{children}</body>
     </html>
   );

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -21,6 +22,8 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingProductPreview } from "@/components/landing/product-preview";
 import { LandingSectionHead } from "@/components/landing/section-head";
 import { SiteFooter } from "@/components/landing/site-footer";
+import { JsonLd, organizationSchema, websiteSchema } from "@/components/seo/json-ld";
+import { absoluteUrl } from "@/lib/seo";
 import { Reveal } from "@/components/landing/reveal";
 import {
   landingAdvisorExchange,
@@ -30,6 +33,12 @@ import {
   landingTrustPoints
 } from "@/data/landing.mock";
 import "./landing.css";
+
+// The homepage canonical lives here rather than in the root layout, so child
+// routes do not inherit it.
+export const metadata: Metadata = {
+  alternates: { canonical: absoluteUrl("/") }
+};
 
 const pillarIcons = [Gauge, TrendingUp, SearchCheck, Bot];
 const trustIcons = [ShieldCheck, Fingerprint, FileSearch];
@@ -50,6 +59,8 @@ const contrast = [
 export default function Home() {
   return (
     <div className="landing-page">
+      <JsonLd data={organizationSchema()} id="ld-organization" />
+      <JsonLd data={websiteSchema()} id="ld-website" />
       <noscript>
         {/* Reveal animations are progressive enhancement; never let them hide content. */}
         <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>

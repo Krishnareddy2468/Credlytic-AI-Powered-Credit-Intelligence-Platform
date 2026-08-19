@@ -5,13 +5,10 @@ import { ArrowLeft } from "lucide-react";
 import { BrandLockup } from "@/components/landing/brand-lockup";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { signInHighlights } from "@/data/landing.mock";
+import { productMetadata } from "@/lib/seo";
 import "./login.css";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to the Credlytic workspace, or open the demo dashboard."
-};
-
+export const metadata: Metadata = productMetadata("Sign in", "/login");
 export default function LoginPage() {
   return (
     <main className="signin-page">

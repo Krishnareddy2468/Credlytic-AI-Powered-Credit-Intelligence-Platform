@@ -8,7 +8,6 @@ export const company = {
   tagline: "Credit analytics, powered by AI.",
   oneLiner: "Know which cards you'll get — before you apply.",
   legalEntity: "SimNex Technologies",
-  registration: "MSME Registered",
   domain: "credlytic.in",
   founded: "2026",
   market: "India",

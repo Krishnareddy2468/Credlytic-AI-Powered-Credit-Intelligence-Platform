@@ -5,6 +5,8 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingSectionHead } from "@/components/landing/section-head";
 import { Reveal } from "@/components/landing/reveal";
 import { SiteFooter } from "@/components/landing/site-footer";
+import { JsonLd, breadcrumbSchema } from "@/components/seo/json-ld";
+import { buildMetadata } from "@/lib/seo";
 import {
   company,
   contact,
@@ -18,11 +20,11 @@ import {
 import "../landing.css";
 import "./about.css";
 
-export const metadata: Metadata = {
-  title: "About",
-  description: `${company.name} is a credit intelligence platform for India, built by ${company.legalEntity}. ${company.mission}`,
-  alternates: { canonical: "/about" }
-};
+export const metadata: Metadata = buildMetadata({
+  description: `Credlytic is a credit intelligence platform for India, built by ${company.legalEntity}. How eligibility confidence is estimated, how issuer policy is reviewed, and how results are ranked.`,
+  path: "/about",
+  title: "About Credlytic — Credit Intelligence for India"
+});
 
 /** Only render contact rows that have actually been filled in. */
 const contactRows = [
@@ -36,6 +38,13 @@ const contactRows = [
 export default function AboutPage() {
   return (
     <div className="landing-page">
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" }
+        ])}
+        id="ld-breadcrumb-about"
+      />
       <noscript>
         <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
       </noscript>
@@ -55,7 +64,7 @@ export default function AboutPage() {
             <h1>Credit decisions should start with information.</h1>
             <p className="about-hero-lede">{company.mission}</p>
             <p className="about-hero-entity">
-              {company.name} is a product of {company.legalEntity} · {company.registration}
+              {company.name} is a product of {company.legalEntity}
             </p>
           </div>
         </section>
@@ -215,10 +224,7 @@ export default function AboutPage() {
                   <dt>
                     <Building2 aria-hidden="true" /> Entity
                   </dt>
-                  <dd>
-                    {company.legalEntity}
-                    <small>{company.registration}</small>
-                  </dd>
+                  <dd>{company.legalEntity}</dd>
                 </div>
                 <div>
                   <dt>

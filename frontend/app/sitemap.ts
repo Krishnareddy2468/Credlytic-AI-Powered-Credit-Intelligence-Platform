@@ -1,19 +1,34 @@
 import type { MetadataRoute } from "next";
-import { siteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/seo";
 
-const routes = [
-  { path: "/", priority: 1, changeFrequency: "weekly" as const },
-  { path: "/about", priority: 0.8, changeFrequency: "monthly" as const },
-  { path: "/cards", priority: 0.8, changeFrequency: "weekly" as const },
-  { path: "/onboarding", priority: 0.6, changeFrequency: "monthly" as const },
-  { path: "/login", priority: 0.4, changeFrequency: "monthly" as const }
+/**
+ * Canonical, public, indexable pages only.
+ *
+ * Product surfaces, the sign-in and onboarding flows, and the comparison tool
+ * are excluded — all carry `noindex`, and listing a noindexed URL in a sitemap
+ * sends Google contradictory signals.
+ *
+ * `lastModified` is intentionally a fixed content date rather than build time.
+ * `new Date()` marks every URL as changed on every deploy, which trains Google
+ * to distrust the signal.
+ *
+ * Card and guide routes get appended here as they ship.
+ */
+const routes: Array<{
+  path: string;
+  lastModified: string;
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+  priority: number;
+}> = [
+  { path: "/", lastModified: "2026-08-19", changeFrequency: "weekly", priority: 1 },
+  { path: "/cards", lastModified: "2026-08-19", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/about", lastModified: "2026-08-19", changeFrequency: "monthly", priority: 0.6 }
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
   return routes.map((route) => ({
-    url: `${siteUrl}${route.path}`,
-    lastModified,
+    url: absoluteUrl(route.path),
+    lastModified: new Date(route.lastModified),
     changeFrequency: route.changeFrequency,
     priority: route.priority
   }));
