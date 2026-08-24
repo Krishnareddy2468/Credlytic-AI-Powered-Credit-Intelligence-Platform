@@ -22,7 +22,11 @@ const routes: Array<{
 }> = [
   { path: "/", lastModified: "2026-08-19", changeFrequency: "weekly", priority: 1 },
   { path: "/cards", lastModified: "2026-08-19", changeFrequency: "weekly", priority: 0.8 },
-  { path: "/about", lastModified: "2026-08-19", changeFrequency: "monthly", priority: 0.6 }
+  { path: "/credit-card-eligibility", lastModified: "2026-08-24", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/about", lastModified: "2026-08-19", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/methodology", lastModified: "2026-08-24", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/editorial-policy", lastModified: "2026-08-24", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/contact", lastModified: "2026-08-24", changeFrequency: "yearly", priority: 0.4 }
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

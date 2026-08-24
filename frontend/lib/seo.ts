@@ -3,15 +3,16 @@ import type { Metadata } from "next";
 /**
  * Canonical origin for every public URL.
  *
- * IMPORTANT: this deliberately does NOT fall back to `VERCEL_PROJECT_PRODUCTION_URL`.
- * That fallback shipped every canonical tag, Open Graph URL and sitemap entry
- * pointing at the *.vercel.app deployment domain, which tells Google the Vercel
- * host is authoritative and leaves credlytic.in with no equity.
+ * Must match the host Vercel serves as Production. `www.credlytic.in` is the
+ * production domain; the apex 308-redirects to it. Declaring the apex here made
+ * every sitemap URL resolve as a redirect and every canonical point at a
+ * redirecting URL, which Search Console reported as "Page with redirect".
  *
- * The hard-coded default means the correct host is used even when no
- * environment variable is configured.
+ * Also deliberately does NOT fall back to `VERCEL_PROJECT_PRODUCTION_URL` — that
+ * resolves to the *.vercel.app deployment host and hands the site's equity to a
+ * domain nobody links to.
  */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://credlytic.in").replace(/\/+$/, "");
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.credlytic.in").replace(/\/+$/, "");
 
 export const SITE_NAME = "Credlytic";
 export const SITE_LOCALE = "en_IN";

@@ -6,7 +6,7 @@ import { LandingSectionHead } from "@/components/landing/section-head";
 import { Reveal } from "@/components/landing/reveal";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { JsonLd, breadcrumbSchema } from "@/components/seo/json-ld";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import {
   company,
   contact,
@@ -231,7 +231,7 @@ export default function AboutPage() {
                     <Globe aria-hidden="true" /> Website
                   </dt>
                   <dd>
-                    <a href={`https://${company.domain}`} rel="noreferrer" target="_blank">
+                    <a href={absoluteUrl("/")} rel="noreferrer" target="_blank">
                       {company.domain}
                     </a>
                     <small>Operating in {company.market}</small>
@@ -257,7 +257,7 @@ export default function AboutPage() {
                   </dl>
                 ) : (
                   <p className="about-contact-fallback">
-                    Reach us through <a href={`https://${company.domain}`} rel="noreferrer" target="_blank">{company.domain}</a>.
+                    Reach us through <a href={absoluteUrl("/")} rel="noreferrer" target="_blank">{company.domain}</a>.
                     Direct contact channels are published as they open.
                   </p>
                 )}

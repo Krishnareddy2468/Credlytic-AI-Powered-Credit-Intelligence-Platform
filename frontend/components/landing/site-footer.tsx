@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandLockup } from "@/components/landing/brand-lockup";
-import { company, contact } from "@/data/company";
+import { company } from "@/data/company";
 
 /**
  * Shared marketing footer. Extracted when the About page was added so the two
@@ -19,15 +19,11 @@ export function SiteFooter() {
           </p>
         </div>
         <p>Prototype experience · Not financial advice · Issuer approval remains final</p>
-        {/*
-          Privacy and Terms previously pointed at /settings, which is not those
-          documents. Dead-ended legal links are worse than absent ones on a
-          financial product, so they are withheld until the real pages exist.
-        */}
-        <nav aria-label="Footer">
+<nav aria-label="Footer">
           <Link href="/about">About</Link>
-          {contact.email ? <a href={`mailto:${contact.email}`}>Contact</a> : null}
-          <Link href="/login">Sign in</Link>
+          <Link href="/methodology">Methodology</Link>
+          <Link href="/editorial-policy">Editorial policy</Link>
+          <Link href="/contact">Contact</Link>
         </nav>
       </div>
     </footer>
