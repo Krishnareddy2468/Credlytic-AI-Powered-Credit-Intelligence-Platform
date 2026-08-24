@@ -1,0 +1,70 @@
+/**
+ * Long-form public pages. Extends the marketing shell in landing.css; adds only
+ * the reading typography those pages need.
+ */
+
+.content-hero { position: relative; overflow-x: clip; margin-top: calc(-1 * var(--landing-header-h)); padding: calc(var(--landing-header-h) + clamp(60px, 6.5vw, 104px)) 0 clamp(44px, 5vw, 76px); background: radial-gradient(circle at 80% 30%, rgba(24, 108, 184, 0.14), transparent 36%), linear-gradient(150deg, #03070d 0%, #07111f 64%, #06101e 100%); }
+.content-hero > .landing-container { position: relative; z-index: 2; }
+.content-kicker { margin: 0; color: var(--cyan); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.content-hero h1 { max-width: 24ch; margin: 20px 0 0; font-family: var(--font-display); font-size: clamp(2.3rem, 4.1vw, 3.9rem); font-weight: 400; line-height: 1.04; letter-spacing: -0.005em; }
+.content-lede { max-width: 62ch; margin: 24px 0 0; color: #a8b4c5; font-size: clamp(0.96rem, 1vw, 1.06rem); line-height: 1.72; }
+.content-reviewed { margin: 22px 0 0; color: #667690; font-size: 0.74rem; }
+
+.content-body { background: var(--paper); color: #101722; padding: clamp(56px, 6vw, 92px) 0 clamp(64px, 7vw, 104px); }
+
+/* Prose ------------------------------------------------------------------- */
+.content-prose { max-width: 46rem; }
+.content-prose > section + section { margin-top: clamp(38px, 4vw, 58px); }
+.content-prose h2 { margin: 0 0 16px; color: #101a28; font-size: clamp(1.3rem, 1.8vw, 1.6rem); font-weight: 650; letter-spacing: -0.005em; line-height: 1.25; }
+.content-prose h3 { margin: 28px 0 10px; color: #16202e; font-size: 1.02rem; font-weight: 620; }
+.content-prose p { margin: 0 0 16px; color: #43505f; font-size: 0.95rem; line-height: 1.78; }
+.content-prose p:last-child { margin-bottom: 0; }
+.content-prose strong { color: #16202e; font-weight: 620; }
+.content-prose a { color: #1660cf; font-weight: 560; text-decoration: underline; text-decoration-color: rgba(22, 96, 207, 0.32); text-underline-offset: 3px; }
+.content-prose a:hover { text-decoration-color: #1660cf; }
+.content-prose ul, .content-prose ol { margin: 0 0 18px; padding-left: 0; list-style: none; display: grid; gap: 11px; }
+.content-prose li { position: relative; padding-left: 20px; color: #43505f; font-size: 0.94rem; line-height: 1.72; }
+.content-prose ul > li::before { position: absolute; top: 0.62em; left: 2px; width: 5px; height: 5px; border-radius: 50%; background: #9aa8ba; content: ""; }
+.content-prose ol { counter-reset: prose; }
+.content-prose ol > li { counter-increment: prose; padding-left: 26px; }
+.content-prose ol > li::before { position: absolute; left: 0; color: #8d9bad; font-size: 0.82rem; font-variant-numeric: tabular-nums; content: counter(prose) "."; }
+
+/* Data table -------------------------------------------------------------- */
+.content-table-scroll { margin: 0 0 18px; overflow-x: auto; }
+.content-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.content-table caption { margin-bottom: 10px; color: #6c7a8b; font-size: 0.78rem; text-align: left; }
+.content-table th, .content-table td { padding: 11px 14px; text-align: left; vertical-align: top; }
+.content-table thead th { border-bottom: 1px solid #c8d1db; color: #465364; font-size: 0.74rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.content-table th:first-child, .content-table td:first-child { padding-left: 0; }
+.content-table tbody tr { border-bottom: 1px solid #dbe2ea; }
+.content-table tbody th { color: #16202e; font-weight: 600; }
+.content-table td { color: #4c596a; font-variant-numeric: tabular-nums; }
+.content-table .content-num { text-align: right; white-space: nowrap; }
+
+/* Callout ----------------------------------------------------------------- */
+.content-note { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 13px; margin: 0 0 18px; border-left: 2px solid var(--blue); background: #fff; padding: 17px 20px; }
+.content-note svg { width: 18px; height: 18px; margin-top: 2px; color: var(--blue); }
+.content-note p { margin: 0; font-size: 0.9rem; }
+.content-note[data-tone="caution"] { border-left-color: #d99a2b; }
+.content-note[data-tone="caution"] svg { color: #d99a2b; }
+
+/* Key-value definition rows ------------------------------------------------ */
+.content-defs { display: grid; gap: 0; margin: 0 0 18px; border-top: 1px solid #dbe2ea; }
+.content-defs > div { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr); gap: 18px; border-bottom: 1px solid #dbe2ea; padding: 15px 0; }
+.content-defs dt { color: #16202e; font-size: 0.88rem; font-weight: 600; }
+.content-defs dd { margin: 0; color: #4c596a; font-size: 0.9rem; line-height: 1.68; }
+
+/* Next-step links --------------------------------------------------------- */
+.content-next { display: grid; gap: 10px; margin: clamp(38px, 4vw, 56px) 0 0; border-top: 1px solid #c8d1db; padding-top: 26px; }
+.content-next h2 { margin-bottom: 4px; }
+.content-next a { display: flex; align-items: baseline; gap: 10px; color: #1660cf; font-size: 0.94rem; font-weight: 560; text-decoration: none; }
+.content-next a span { color: #6c7a8b; font-size: 0.86rem; font-weight: 400; }
+.content-next a:hover { text-decoration: underline; }
+
+@media (max-width: 767px) {
+  .content-hero h1 { max-width: 100%; font-size: clamp(1.95rem, 8.4vw, 2.5rem); }
+  .content-lede { font-size: 0.92rem; }
+  .content-prose h2 { font-size: 1.2rem; }
+  .content-defs > div { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .content-next a { flex-direction: column; gap: 3px; }
+}
