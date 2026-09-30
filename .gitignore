@@ -23,3 +23,16 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+# Docs (keep only README)
+docs/
+!docs/README.md
+
+# IDE
+.vscode/
+
+# UCI dataset extras (keep only crx.data and augmented csv)
+data/datasets/Index
+data/datasets/credit.lisp
+data/datasets/credit.names
+data/datasets/crx.names
