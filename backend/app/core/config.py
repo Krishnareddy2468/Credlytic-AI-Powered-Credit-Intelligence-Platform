@@ -15,6 +15,7 @@ class Settings(BaseSettings):
         default="http://localhost:3000"
     )
     database_url: str = "sqlite+aiosqlite:///./app.db"
+    ml_artifacts_dir: str = ""
     redis_url: str = "redis://localhost:6379/0"
     secret_key: str = "change-this-in-production"
     access_token_expire_minutes: int = 30

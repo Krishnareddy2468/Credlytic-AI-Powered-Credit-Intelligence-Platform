@@ -46,8 +46,11 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+    environment:
+      ML_ARTIFACTS_DIR: /ml/artifacts
     volumes:
       - ./backend:/app
+      - ./ml/artifacts:/ml/artifacts:ro
 
   frontend:
     build: ./frontend
