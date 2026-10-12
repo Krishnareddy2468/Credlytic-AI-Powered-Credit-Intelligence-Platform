@@ -1,4 +1,4 @@
-import { ProfileExperience } from "@/components/profile-experience";
+import { LiveProfileExperience, ProfileExperience } from "@/components/profile-experience";
 import { ProductShell } from "@/components/product-shell";
 import { profileMocks, profileSectionMeta, type ProfileMockState, type ProfileSectionId } from "@/data/profile.mock";
 
@@ -8,25 +8,25 @@ const availableEditors = new Set<ProfileSectionId>(profileSectionMeta.map((secti
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ state?: string; edit?: string }> }) {
   const params = await searchParams;
   const requestedState = params.state as ProfileMockState | undefined;
-  const state = requestedState && availableStates.has(requestedState) ? requestedState : "complete";
+  const state = requestedState && availableStates.has(requestedState) ? requestedState : null;
   const requestedEditor = params.edit as ProfileSectionId | undefined;
   const initialEditor = state === "validation-error" ? "credit" : requestedEditor && availableEditors.has(requestedEditor) ? requestedEditor : null;
-  const profile = profileMocks[state];
+  const profile = state ? profileMocks[state] : null;
 
   return (
     <ProductShell
       compactHeader
-      profileCompletion={profile.completion}
+      profileCompletion={profile?.completion ?? 100}
       searchPlaceholder="Search cards or ask Credlytic"
       subtitle="The financial signals Credlytic uses to understand your current card options."
       title="Financial profile"
     >
-      <ProfileExperience
+      {profile ? <ProfileExperience
         forceSaveFailure={state === "save-failure"}
         initialEditor={initialEditor}
         initialProfile={profile}
         initialValidationError={state === "validation-error"}
-      />
+      /> : <LiveProfileExperience />}
     </ProductShell>
   );
 }

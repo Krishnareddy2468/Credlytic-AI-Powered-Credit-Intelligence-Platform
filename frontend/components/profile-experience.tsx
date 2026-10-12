@@ -6,7 +6,15 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ProgressBar, Surface } from "@/components/product-ui";
-import { profileSectionMeta, type FinancialProfile, type ProfileSectionId } from "@/data/profile.mock";
+import { profileSectionMeta, type CardGoal, type FinancialProfile, type ProfileSectionId } from "@/data/profile.mock";
+import {
+  getFinancialProfile,
+  loadProfile,
+  loadSession,
+  saveFinancialProfile,
+  saveProfile,
+  type FinancialProfileInput
+} from "@/lib/api";
 
 type Draft = Record<string, string | number>;
 type SaveState = "idle" | "saving" | "error";
@@ -124,7 +132,7 @@ function ProfileDocument({ profile, onEdit }: { profile: FinancialProfile; onEdi
   );
 }
 
-function ProfileEditor({ profile, section, initialValidationError, forceSaveFailure, onClose, onDirtyChange, onSaved }: { profile: FinancialProfile; section: ProfileSectionId; initialValidationError: boolean; forceSaveFailure: boolean; onClose: () => void; onDirtyChange: (dirty: boolean) => void; onSaved: (section: ProfileSectionId, values: Draft) => void }) {
+function ProfileEditor({ profile, section, initialValidationError, forceSaveFailure, onClose, onDirtyChange, onSaved }: { profile: FinancialProfile; section: ProfileSectionId; initialValidationError: boolean; forceSaveFailure: boolean; onClose: () => void; onDirtyChange: (dirty: boolean) => void; onSaved: (section: ProfileSectionId, values: Draft) => Promise<void> }) {
   const meta = profileSectionMeta.find((item) => item.id === section)!;
   const defaults = sectionDefaults(profile, section);
   if (initialValidationError && section === "credit") defaults.score = 950;
@@ -161,9 +169,12 @@ function ProfileEditor({ profile, section, initialValidationError, forceSaveFail
       return;
     }
     setSaveState("saving");
-    await new Promise((resolve) => window.setTimeout(resolve, 650));
     if (forceSaveFailure) { setSaveState("error"); return; }
-    onSaved(section, result.data as Draft);
+    try {
+      await onSaved(section, result.data as Draft);
+    } catch {
+      setSaveState("error");
+    }
   }
 
   return (
@@ -187,7 +198,7 @@ function ProfileEditor({ profile, section, initialValidationError, forceSaveFail
   );
 }
 
-export function ProfileExperience({ initialProfile, initialEditor = null, forceSaveFailure = false, initialValidationError = false }: { initialProfile: FinancialProfile; initialEditor?: ProfileSectionId | null; forceSaveFailure?: boolean; initialValidationError?: boolean }) {
+export function ProfileExperience({ initialProfile, initialEditor = null, forceSaveFailure = false, initialValidationError = false, onPersist }: { initialProfile: FinancialProfile; initialEditor?: ProfileSectionId | null; forceSaveFailure?: boolean; initialValidationError?: boolean; onPersist?: (profile: FinancialProfile) => Promise<void> }) {
   const [profile, setProfile] = useState(initialProfile);
   const [editor, setEditor] = useState<ProfileSectionId | null>(initialEditor);
   const [dirty, setDirty] = useState(false);
@@ -207,14 +218,14 @@ export function ProfileExperience({ initialProfile, initialEditor = null, forceS
     setEditor(null);
   }
 
-  function saveSection(section: ProfileSectionId, values: Draft) {
-    setProfile((current) => {
-      const wasComplete = sectionIsComplete(current, section);
-      const next = { ...current, [section]: values } as FinancialProfile;
-      const isNowComplete = sectionIsComplete(next, section);
-      const completedSections = current.completedSections + (!wasComplete && isNowComplete ? 1 : 0);
-      return { ...next, completedSections, completion: Math.round((completedSections / current.totalSections) * 100), updatedLabel: "Updated just now" };
-    });
+  async function saveSection(section: ProfileSectionId, values: Draft) {
+    const wasComplete = sectionIsComplete(profile, section);
+    const changed = { ...profile, [section]: values } as FinancialProfile;
+    const isNowComplete = sectionIsComplete(changed, section);
+    const completedSections = profile.completedSections + (!wasComplete && isNowComplete ? 1 : 0);
+    const next = { ...changed, completedSections, completion: Math.round((completedSections / profile.totalSections) * 100), updatedLabel: "Updated just now" };
+    await onPersist?.(next);
+    setProfile(next);
     setDirty(false);
     setEditor(null);
     setSavedMessage(`${profileSectionMeta.find((item) => item.id === section)?.label} saved`);
@@ -235,4 +246,103 @@ export function ProfileExperience({ initialProfile, initialEditor = null, forceS
       {editor ? <ProfileEditor forceSaveFailure={forceSaveFailure} initialValidationError={initialValidationError} onClose={closeEditor} onDirtyChange={setDirty} onSaved={saveSection} profile={profile} section={editor} /> : null}
     </div>
   );
+}
+
+function displayEmployment(value: string) {
+  return value.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("-");
+}
+
+function cardGoal(value: string): CardGoal {
+  const matched = ["Cashback", "Travel", "Fuel", "Dining", "Rewards", "Premium lifestyle"].find((goal) => goal.toLowerCase() === value.toLowerCase());
+  return (matched ?? "Cashback") as CardGoal;
+}
+
+function apiProfileToView(profile: FinancialProfileInput): FinancialProfile {
+  const primary = cardGoal(profile.primary_goal);
+  const income = profile.monthly_gross_income + profile.additional_income;
+  return {
+    completion: 100,
+    completedSections: 6,
+    totalSections: 6,
+    updatedLabel: "Loaded from your account",
+    personal: { age: profile.age, city: profile.city, employment: displayEmployment(profile.employment_type), employer: profile.employer_name || "Not provided" },
+    income: { monthlyGross: profile.monthly_gross_income, additionalMonthly: profile.additional_income, additionalIncomeType: profile.additional_income > 0 ? "Other" : "None" },
+    credit: { score: profile.credit_score, source: "Self-reported", historyYears: Math.floor(profile.credit_history_months / 12), historyMonths: profile.credit_history_months % 12, paymentHistory: profile.payment_history_percent, utilization: Math.min(100, Math.round(profile.outstanding_balances / Math.max(income * 2, 1) * 100)) },
+    obligations: { activeLoans: profile.existing_loan_count, monthlyEmi: profile.total_emi_amount, cardsHeld: profile.credit_card_count, outstandingBalance: profile.outstanding_balances },
+    spending: { onlineShopping: profile.spending.online_shopping, groceries: profile.spending.groceries, fuel: profile.spending.fuel, dining: profile.spending.dining, travel: profile.spending.travel, utilities: profile.spending.utilities, entertainment: profile.spending.entertainment, other: 0 },
+    goals: { primary, secondary: primary === "Travel" ? "Cashback" : "Travel" }
+  };
+}
+
+function viewProfileToApi(profile: FinancialProfile): FinancialProfileInput {
+  if (profile.credit.score === null) throw new Error("A credit score is required for live eligibility checks.");
+  return {
+    age: profile.personal.age,
+    city: profile.personal.city,
+    employment_type: profile.personal.employment.toLowerCase().replaceAll("-", "_").replaceAll(" ", "_"),
+    employer_name: profile.personal.employer,
+    monthly_gross_income: profile.income.monthlyGross,
+    additional_income: profile.income.additionalMonthly,
+    existing_loan_count: profile.obligations.activeLoans,
+    total_emi_amount: profile.obligations.monthlyEmi,
+    credit_card_count: profile.obligations.cardsHeld,
+    outstanding_balances: profile.obligations.outstandingBalance,
+    credit_score: profile.credit.score,
+    credit_history_months: profile.credit.historyYears * 12 + profile.credit.historyMonths,
+    payment_history_percent: profile.credit.paymentHistory,
+    spending: {
+      online_shopping: profile.spending?.onlineShopping ?? 0,
+      groceries: profile.spending?.groceries ?? 0,
+      fuel: profile.spending?.fuel ?? 0,
+      dining: profile.spending?.dining ?? 0,
+      travel: profile.spending?.travel ?? 0,
+      utilities: profile.spending?.utilities ?? 0,
+      entertainment: profile.spending?.entertainment ?? 0
+    },
+    primary_goal: profile.goals.primary.toLowerCase()
+  };
+}
+
+export function LiveProfileExperience() {
+  const [profile, setProfile] = useState<FinancialProfile | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    const session = loadSession();
+    const cached = loadProfile();
+    const frame = window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      if (cached) {
+        setProfile(apiProfileToView(cached));
+        setState("ready");
+      } else if (!session) setState("missing");
+    });
+    if (!session) {
+      return () => { cancelled = true; window.cancelAnimationFrame(frame); };
+    }
+    void getFinancialProfile(session.userId).then((stored) => {
+      if (cancelled || !stored) {
+        if (!cancelled && !cached) setState("missing");
+        return;
+      }
+      saveProfile(stored);
+      setProfile(apiProfileToView(stored));
+      setState("ready");
+    }).catch(() => { if (!cancelled && !cached) setState("error"); });
+    return () => { cancelled = true; window.cancelAnimationFrame(frame); };
+  }, []);
+
+  async function persist(next: FinancialProfile) {
+    const session = loadSession();
+    if (!session) throw new Error("Sign in to save your profile.");
+    const payload = viewProfileToApi(next);
+    await saveFinancialProfile(session.userId, payload);
+    saveProfile(payload);
+  }
+
+  if (state === "loading") return <Surface className="profile-summary-strip"><div><span>Financial profile</span><strong>Loading your profile…</strong></div></Surface>;
+  if (state === "missing") return <Surface className="profile-summary-strip"><div><span>Financial profile required</span><strong>Complete onboarding to add your financial details.</strong><small>Your saved profile will be used for live eligibility checks.</small></div><Link className="button button-primary button-app" href="/onboarding">Complete profile<ArrowRight /></Link></Surface>;
+  if (state === "error" || !profile) return <Surface className="profile-summary-strip"><div><span>Profile unavailable</span><strong>We couldn’t load your saved profile.</strong><small>Check that the API is running, then reload this page.</small></div></Surface>;
+  return <ProfileExperience initialProfile={profile} onPersist={persist} />;
 }
