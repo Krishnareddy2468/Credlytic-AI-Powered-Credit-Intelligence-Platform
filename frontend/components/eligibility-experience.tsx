@@ -17,9 +17,10 @@ import {
   SlidersHorizontal,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductShell } from "@/components/product-shell";
 import { CreditCardVisual, ProgressBar, Surface } from "@/components/product-ui";
+import { checkEligibility, listCards, loadProfile, saveEligibilityAssessment, type CreditCard, type EligibilityResponse } from "@/lib/api";
 import type {
   EligibilityCard,
   EligibilityData,
@@ -127,6 +128,19 @@ function InfluenceRows({ factors }: { factors: EligibilityCard["positiveFactors"
   return <div className="eligibility-v2-influence-list">{factors.map((factor) => <div className={`eligibility-v2-influence eligibility-v2-influence-${factor.tone}`} key={factor.id}><span>{factor.tone === "positive" ? <Check aria-hidden="true" /> : factor.tone === "caution" ? <CircleAlert aria-hidden="true" /> : <Info aria-hidden="true" />}</span><div><strong>{factor.label}</strong><small>{factor.interpretation}</small></div><b>{factor.value}</b></div>)}</div>;
 }
 
+function ShapWaterfall({ card }: { card: EligibilityCard }) {
+  const factors = [...card.positiveFactors, ...card.limitingFactors].filter((factor) => factor.impact !== undefined);
+  const maxImpact = Math.max(...factors.map((factor) => Math.abs(factor.impact ?? 0)), 1);
+  if (!factors.length) return null;
+  return <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>03</span><h3>SHAP waterfall</h3></div><p className="eligibility-v2-waterfall-caption">Each bar shows the direction and relative strength of a profile signal in the model output.</p><div className="eligibility-v2-waterfall">{factors.map((factor) => { const impact = factor.impact ?? 0; const width = Math.max(5, Math.abs(impact) / maxImpact * 50); return <div key={factor.id}><span>{factor.label}</span><span className="eligibility-v2-waterfall-track"><i className={impact >= 0 ? "eligibility-v2-waterfall-positive" : "eligibility-v2-waterfall-negative"} style={impact >= 0 ? { left: "50%", width: `${width}%` } : { right: "50%", width: `${width}%` }} /></span><b>{impact >= 0 ? "+" : ""}{impact.toFixed(3)}</b></div>; })}</div><div className="eligibility-v2-waterfall-legend"><span>Decreases estimate</span><span>Increases estimate</span></div></section>;
+}
+
+function CardDetails({ card }: { card: EligibilityCard }) {
+  const details = card.cardDetails;
+  if (!details) return null;
+  return <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>04</span><h3>Card details</h3></div><dl className="eligibility-v2-card-details"><div><dt>Joining fee</dt><dd>{formatINR(details.joiningFee)}</dd></div><div><dt>Annual fee</dt><dd>{formatINR(details.annualFee)}</dd></div><div><dt>Fee waiver</dt><dd>{details.waiverCondition || "Not listed"}</dd></div><div><dt>Lounge access</dt><dd>{details.loungeAccess || "Not listed"}</dd></div><div><dt>Fuel surcharge</dt><dd>{details.fuelSurchargeWaiver || "Not listed"}</dd></div><div><dt>Foreign markup</dt><dd>{details.foreignMarkupPercent}%</dd></div><div><dt>Welcome benefit</dt><dd>{details.welcomeBenefit || "None listed"}</dd></div></dl>{details.rewardRates.length ? <div className="eligibility-v2-benefit-list"><strong>Reward rates</strong>{details.rewardRates.map((reward) => <span key={reward.category}><b>{reward.category.replaceAll("_", " ")}</b>{reward.rate}</span>)}</div> : null}{details.categoryBenefits.length ? <div className="eligibility-v2-benefit-list"><strong>Category benefits</strong>{details.categoryBenefits.map((benefit) => <span key={benefit.category}><b>{benefit.category.replaceAll("_", " ")}</b>{benefit.benefit}</span>)}</div> : null}</section>;
+}
+
 function DetailPane({ card, mobileOpen, sourceOpen, onClose, onSourceToggle }: { card: EligibilityCard; mobileOpen: boolean; sourceOpen: string | null; onClose: () => void; onSourceToggle: (id: string) => void }) {
   return (
     <>
@@ -140,13 +154,15 @@ function DetailPane({ card, mobileOpen, sourceOpen, onClose, onSourceToggle }: {
           <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>01</span><h3>What is helping</h3></div><InfluenceRows factors={card.positiveFactors} /></section>
           <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>02</span><h3>What is limiting</h3></div><InfluenceRows factors={card.limitingFactors} /></section>
 
-          <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>03</span><h3>Policy context</h3></div><PolicyLabel card={card} /><p className="eligibility-v2-policy-summary">{card.policy.summary}</p><div className="eligibility-v2-criteria">{card.policy.criteria.map((criterion) => <div key={criterion.label}><span><strong>{criterion.label}</strong><small>Current profile: {criterion.profileValue}</small></span><b className={`eligibility-v2-criterion-${criterion.tone}`}>{criterion.assessment}</b></div>)}</div>
+          <ShapWaterfall card={card} />
+          <CardDetails card={card} />
+          <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>05</span><h3>Issuer criteria</h3></div><PolicyLabel card={card} /><p className="eligibility-v2-policy-summary">{card.policy.summary}</p><div className="eligibility-v2-criteria">{card.policy.criteria.map((criterion) => <div key={criterion.label}><span><strong>{criterion.label}</strong><small>Current profile: {criterion.profileValue}</small></span><b className={`eligibility-v2-criterion-${criterion.tone}`}>{criterion.assessment}</b></div>)}</div>
             <div className="eligibility-v2-sources">{card.policy.sources.map((source) => { const expanded = sourceOpen === source.id; return <article key={source.id}><button aria-expanded={expanded} onClick={() => onSourceToggle(source.id)} type="button"><FileText aria-hidden="true" /><span><strong>{source.documentTitle}</strong><small>{source.issuer} · Reviewed {source.reviewedAt}</small></span><ChevronDown className={expanded ? "is-rotated" : ""} aria-hidden="true" /></button>{expanded ? <div className="eligibility-v2-source-detail"><span>{source.sourceLabel}</span><dl><div><dt>Relevant section</dt><dd>{source.relevantSection}</dd></div><div><dt>Review date</dt><dd>{source.reviewedAt}</dd></div></dl><p>{source.excerpt}</p></div> : null}</article>; })}</div>
           </section>
 
-          {(card.estimatedAnnualValue !== null || card.estimatedLimit !== null) ? <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>04</span><h3>Decision context</h3></div><dl className="eligibility-v2-decision-values">{card.estimatedAnnualValue !== null ? <div><dt>Estimated personal value</dt><dd>{formatINR(card.estimatedAnnualValue)} <small>/ year</small></dd><span>Based on the current spending profile</span></div> : null}{card.estimatedLimit !== null ? <div><dt>Estimated limit range</dt><dd>{formatINR(card.estimatedLimit[0])} – {formatINR(card.estimatedLimit[1])}</dd><span>Indicative estimate, not an issuer-approved limit</span></div> : null}</dl></section> : null}
+          {(card.estimatedAnnualValue !== null || card.estimatedLimit !== null) ? <section className="eligibility-v2-detail-section"><div className="eligibility-v2-detail-title"><span>06</span><h3>Decision context</h3></div><dl className="eligibility-v2-decision-values">{card.estimatedAnnualValue !== null ? <div><dt>Estimated personal value</dt><dd>{formatINR(card.estimatedAnnualValue)} <small>/ year</small></dd><span>Based on the current spending profile</span></div> : null}{card.estimatedLimit !== null ? <div><dt>Estimated limit range</dt><dd>{formatINR(card.estimatedLimit[0])} – {formatINR(card.estimatedLimit[1])}</dd><span>Indicative estimate, not an issuer-approved limit</span></div> : null}</dl></section> : null}
 
-          <section className="eligibility-v2-next-move"><div className="eligibility-v2-detail-title"><span>05</span><h3>Next move</h3></div><SlidersHorizontal aria-hidden="true" /><h4>{card.recommendedAction.title}</h4><p>{card.recommendedAction.explanation}</p><Link className="text-action" href={card.recommendedAction.href}>{card.recommendedAction.actionLabel}<ArrowRight aria-hidden="true" /></Link></section>
+          <section className="eligibility-v2-next-move"><div className="eligibility-v2-detail-title"><span>07</span><h3>Next move</h3></div><SlidersHorizontal aria-hidden="true" /><h4>{card.recommendedAction.title}</h4><p>{card.recommendedAction.explanation}</p><Link className="text-action" href={card.recommendedAction.href}>{card.recommendedAction.actionLabel}<ArrowRight aria-hidden="true" /></Link></section>
         </div>
       </aside>
     </>
@@ -166,7 +182,17 @@ function EligibilityIncomplete({ data }: { data: Extract<EligibilityData, { stat
   );
 }
 
-function ReadyEligibility({ data, selectedId, onSelectedIdChange }: { data: EligibilityReadyData; selectedId: string; onSelectedIdChange: (cardId: string) => void }) {
+function EligibilityError({ message, onRetry }: { message: string; onRetry?: () => Promise<void> }) {
+  const [retrying, setRetrying] = useState(false);
+  async function retry() {
+    if (!onRetry) return;
+    setRetrying(true);
+    try { await onRetry(); } catch { /* The error state remains visible for another retry. */ } finally { setRetrying(false); }
+  }
+  return <div className="eligibility-v2-state eligibility-v2-incomplete"><Surface><CircleAlert aria-hidden="true" /><p className="eyebrow">Assessment unavailable</p><h1>We couldn’t load your live results</h1><p>{message}</p><button className="button button-primary button-app" disabled={retrying} onClick={() => void retry()} type="button"><RefreshCw className={retrying ? "is-spinning" : ""} />{retrying ? "Retrying…" : "Try again"}</button></Surface></div>;
+}
+
+function ReadyEligibility({ data, selectedId, onSelectedIdChange, onRefresh }: { data: EligibilityReadyData; selectedId: string; onSelectedIdChange: (cardId: string) => void; onRefresh?: () => Promise<void> }) {
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [filter, setFilter] = useState<EligibilityFilter>("all");
   const [sort, setSort] = useState<EligibilitySort>("best-fit");
@@ -174,10 +200,7 @@ function ReadyEligibility({ data, selectedId, onSelectedIdChange }: { data: Elig
   const [sourceOpen, setSourceOpen] = useState<string | null>(null);
   const [assessmentStatus, setAssessmentStatus] = useState(data.assessmentStatus);
   const [refreshing, setRefreshing] = useState(false);
-  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedCard = data.cards.find((card) => card.id === selectedId) ?? data.cards[0];
-
-  useEffect(() => () => { if (refreshTimer.current) clearTimeout(refreshTimer.current); }, []);
 
   const visibleCards = useMemo(() => {
     const filtered = data.cards.filter((card) => {
@@ -191,7 +214,7 @@ function ReadyEligibility({ data, selectedId, onSelectedIdChange }: { data: Elig
 
   function selectCard(cardId: string) { onSelectedIdChange(cardId); setSourceOpen(null); setMobileDetailOpen(true); }
   function toggleCompare(cardId: string) { setCompareIds((current) => current.includes(cardId) ? current.filter((id) => id !== cardId) : current.length < 3 ? [...current, cardId] : current); }
-  function refreshAssessment() { setRefreshing(true); refreshTimer.current = setTimeout(() => { setRefreshing(false); setAssessmentStatus("current"); refreshTimer.current = null; }, 900); }
+  async function refreshAssessment() { setRefreshing(true); try { if (onRefresh) await onRefresh(); setAssessmentStatus("current"); } catch { setAssessmentStatus("refresh-error"); } finally { setRefreshing(false); } }
 
   return (
     <div className="eligibility-v2">
@@ -218,7 +241,7 @@ function ReadyEligibility({ data, selectedId, onSelectedIdChange }: { data: Elig
   );
 }
 
-export function EligibilityPageExperience({ data, initialSelectedId }: { data: EligibilityData; initialSelectedId?: string }) {
+export function EligibilityPageExperience({ data, initialSelectedId, onRefresh }: { data: EligibilityData; initialSelectedId?: string; onRefresh?: () => Promise<void> }) {
   const initialCardId = data.state === "ready" && data.cards.some((card) => card.id === initialSelectedId) ? initialSelectedId! : data.state === "ready" ? data.cards[0].id : "";
   const [selectedId, setSelectedId] = useState(initialCardId);
   const selectedCard = data.state === "ready" ? data.cards.find((card) => card.id === selectedId) ?? data.cards[0] : null;
@@ -233,7 +256,102 @@ export function EligibilityPageExperience({ data, initialSelectedId }: { data: E
 
   return (
     <ProductShell advisorContext={advisorContext} compactHeader profileCompletion={data.state === "incomplete" ? Math.round((data.completedSections / data.totalSections) * 100) : 100} searchPlaceholder="Search cards or ask Credlytic" subtitle="Current profile alignment, policy context, and next actions." title="Eligibility">
-      {data.state === "loading" ? <EligibilityLoading /> : data.state === "incomplete" ? <EligibilityIncomplete data={data} /> : <ReadyEligibility data={data} onSelectedIdChange={setSelectedId} selectedId={selectedId} />}
+      {data.state === "loading" ? <EligibilityLoading /> : data.state === "incomplete" ? <EligibilityIncomplete data={data} /> : data.state === "error" ? <EligibilityError message={data.message} onRetry={onRefresh} /> : <ReadyEligibility data={data} onRefresh={onRefresh} onSelectedIdChange={setSelectedId} selectedId={selectedId} />}
     </ProductShell>
   );
+}
+
+const tones = ["ink", "blue", "emerald", "silver"] as const;
+function liveData(response: EligibilityResponse, catalogue: CreditCard[]): EligibilityReadyData {
+  const cardsById = new Map(catalogue.map((card) => [card.id, card]));
+  const cards: EligibilityCard[] = response.results.map((result, index) => {
+    const card = cardsById.get(result.card_id);
+    const factors = result.shap_top5.map((factor, factorIndex) => ({
+      id: `${result.card_id}-${factor.feature}-${factorIndex}`,
+      label: factor.feature.replaceAll("_", " "),
+      value: factor.value,
+      interpretation: factor.explanation,
+      tone: factor.direction === "increasing" ? "positive" as const : "caution" as const,
+      impact: factor.impact
+    }));
+    const confidence = Math.round(result.probability * 100);
+    const status: EligibilityStatus = confidence >= 80 ? "Strong match" : confidence >= 65 ? "Good match" : confidence >= 45 ? "Improve first" : "Not currently suitable";
+    const incomeAligned = result.meets_income_requirement;
+    const scoreAligned = result.meets_score_requirement;
+    return {
+      id: result.card_id,
+      rank: index + 1,
+      bank: result.bank,
+      name: result.name,
+      network: card?.network === "Mastercard" || card?.network === "RuPay" || card?.network === "Amex" ? card.network : "Visa",
+      tone: tones[index % tones.length],
+      confidence,
+      status,
+      estimatedAnnualValue: null,
+      estimatedLimit: [result.limit_range.min, result.limit_range.max],
+      cardDetails: card ? {
+        joiningFee: card.joining_fee,
+        annualFee: card.annual_fee,
+        waiverCondition: card.waiver_condition,
+        rewardRates: Object.entries(card.reward_rates).map(([category, rate]) => ({ category, rate })),
+        categoryBenefits: Object.entries(card.category_benefits).map(([category, benefit]) => ({ category, benefit })),
+        welcomeBenefit: card.welcome_benefits,
+        fuelSurchargeWaiver: card.fuel_surcharge_waiver,
+        loungeAccess: card.lounge_access,
+        foreignMarkupPercent: card.foreign_markup_percent
+      } : undefined,
+      reason: incomeAligned && scoreAligned ? "Your profile clears the published income and credit-score criteria." : "One or more published eligibility criteria is not currently met.",
+      bestOptionReason: index === 0 ? "This is your highest current model-estimated approval probability." : undefined,
+      positiveFactors: factors.filter((factor) => factor.tone === "positive"),
+      limitingFactors: factors.filter((factor) => factor.tone !== "positive"),
+      policy: {
+        status: incomeAligned && scoreAligned ? "aligned" : "review",
+        label: incomeAligned && scoreAligned ? "Published thresholds met" : "Review issuer criteria",
+        summary: "This assessment checks the card catalogue’s configured income and credit-score requirements. Final approval remains with the issuer.",
+        criteria: [
+          { label: "Minimum monthly income", profileValue: card ? `Requirement: ₹${card.min_monthly_income.toLocaleString("en-IN")}` : "Unavailable", assessment: incomeAligned ? "Met" : "Not met", tone: incomeAligned ? "positive" : "caution" },
+          { label: "Minimum credit score", profileValue: card ? `Requirement: ${card.min_credit_score}` : "Unavailable", assessment: scoreAligned ? "Met" : "Not met", tone: scoreAligned ? "positive" : "caution" }
+        ],
+        sources: []
+      },
+      recommendedAction: {
+        title: status === "Strong match" ? "Consider this card first" : "Strengthen your profile first",
+        explanation: status === "Strong match" ? "Review the card details and issuer terms before applying." : "Use the limiting model factors to improve your profile, then reassess.",
+        href: "/profile",
+        actionLabel: "Review your profile"
+      }
+    };
+  });
+  return {
+    state: "ready",
+    assessmentStatus: "current",
+    profileUpdatedLabel: `Live model · ${response.latency_ms} ms`,
+    assessedCards: response.evaluated_cards,
+    worthwhileMatches: cards.filter((card) => card.status === "Strong match" || card.status === "Good match").length,
+    profileStrength: Math.round(response.base_probability * 100),
+    primaryLimitingFactor: cards.flatMap((card) => card.limitingFactors)[0]?.label ?? "No major limiting factor",
+    valueEstimatesAvailable: false,
+    cards
+  };
+}
+
+export function LiveEligibilityExperience({ initialSelectedId }: { initialSelectedId?: string }) {
+  const [data, setData] = useState<EligibilityData>({ state: "loading" });
+  async function assess() {
+    const profile = loadProfile();
+    if (!profile) {
+      setData({ state: "incomplete", completedSections: 0, totalSections: 1, missingSections: [{ label: "Financial profile", explanation: "Complete onboarding to run a live eligibility assessment." }] });
+      return;
+    }
+    const [response, catalogue] = await Promise.all([checkEligibility(profile), listCards()]);
+    saveEligibilityAssessment(response);
+    setData(liveData(response, catalogue));
+  }
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void assess().catch(() => setData({ state: "error", message: "Start the API and trained model, then retry the assessment." }));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return <EligibilityPageExperience data={data} initialSelectedId={initialSelectedId} onRefresh={assess} />;
 }

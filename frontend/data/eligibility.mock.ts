@@ -12,6 +12,7 @@ export type EligibilityFactor = {
   value: string;
   interpretation: string;
   tone: "positive" | "caution" | "context";
+  impact?: number;
 };
 
 export type EligibilityCard = {
@@ -25,6 +26,17 @@ export type EligibilityCard = {
   status: EligibilityStatus;
   estimatedAnnualValue: number | null;
   estimatedLimit: [number, number] | null;
+  cardDetails?: {
+    joiningFee: number;
+    annualFee: number;
+    waiverCondition: string;
+    rewardRates: Array<{ category: string; rate: number }>;
+    categoryBenefits: Array<{ category: string; benefit: string }>;
+    welcomeBenefit: string;
+    fuelSurchargeWaiver: string;
+    loungeAccess: string;
+    foreignMarkupPercent: number;
+  };
   reason: string;
   bestOptionReason?: string;
   positiveFactors: EligibilityFactor[];
@@ -57,7 +69,7 @@ export type EligibilityIncompleteData = {
   missingSections: Array<{ label: string; explanation: string }>;
 };
 
-export type EligibilityData = EligibilityReadyData | EligibilityIncompleteData | { state: "loading" };
+export type EligibilityData = EligibilityReadyData | EligibilityIncompleteData | { state: "loading" } | { state: "error"; message: string };
 
 const cards: EligibilityCard[] = [
   {
