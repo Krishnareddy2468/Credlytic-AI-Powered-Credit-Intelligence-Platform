@@ -1,8 +1,15 @@
+import asyncio
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import delete
 
+from app.db.session import AsyncSessionLocal
 from app.main import app
 from app.models.card import CreditCard
+from app.models.profile import FinancialProfile
+from app.models.user import User
 from app.schemas.profile import FinancialProfileBase
 from app.services.eligibility import (
     build_feature_frames,
@@ -153,3 +160,63 @@ def test_card_fit_rewards_headroom() -> None:
     # Exactly on both thresholds is the neutral midpoint by construction.
     assert marginal == pytest.approx(0.5)
     assert 0.0 <= short < 0.5 < comfortable <= 1.0
+
+
+def test_week_three_flow_across_five_user_profiles(client) -> None:
+    """Register, save, and assess five materially different profile combinations."""
+    unique = uuid4().hex
+    email = f"week3-{unique}@example.com"
+    phone = f"9{unique[:9]}"
+    password = "Week3-test-password"
+
+    registered = client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "phone": phone, "password": password},
+    )
+    assert registered.status_code == 201
+    user_id = registered.json()["id"]
+
+    try:
+        logged_in = client.post(
+            "/api/v1/auth/login", json={"email": email, "password": password}
+        )
+        assert logged_in.status_code == 200
+        assert logged_in.json()["access_token"]
+
+        profiles = [
+            {**PROFILE, "employment_type": "salaried", "monthly_gross_income": 200000, "credit_score": 810, "city": "Mumbai"},
+            {**PROFILE, "employment_type": "self_employed", "monthly_gross_income": 90000, "credit_score": 735, "city": "Pune"},
+            {**PROFILE, "employment_type": "business", "monthly_gross_income": 250000, "credit_score": 660, "city": "Jaipur"},
+            {**PROFILE, "employment_type": "freelancer", "monthly_gross_income": 60000, "credit_score": 710, "city": "Indore"},
+            {**PROFILE, "employment_type": "salaried", "monthly_gross_income": 25000, "credit_score": 620, "city": "Bhilwara"},
+        ]
+        probabilities = []
+
+        for profile in profiles:
+            saved = client.put(f"/api/v1/profile/{user_id}", json=profile)
+            assert saved.status_code == 200
+            assert saved.json()["user_id"] == user_id
+
+            assessed = client.post(
+                "/api/v1/eligibility/check", json={"user_id": user_id, "top_n": 5}
+            )
+            assert assessed.status_code == 200
+            body = assessed.json()
+            assert len(body["results"]) == 5
+            assert all(len(card["shap_top5"]) == 5 for card in body["results"])
+            assert [card["probability"] for card in body["results"]] == sorted(
+                [card["probability"] for card in body["results"]], reverse=True
+            )
+            probabilities.append(body["base_probability"])
+
+        assert len(probabilities) == 5
+        assert max(probabilities) > min(probabilities)
+        assert probabilities[0] > probabilities[-1]
+    finally:
+        async def cleanup() -> None:
+            async with AsyncSessionLocal() as session:
+                await session.execute(delete(FinancialProfile).where(FinancialProfile.user_id == user_id))
+                await session.execute(delete(User).where(User.id == user_id))
+                await session.commit()
+
+        asyncio.run(cleanup())
