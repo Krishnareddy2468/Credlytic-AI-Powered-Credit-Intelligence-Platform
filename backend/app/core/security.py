@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+import bcrypt
 from jose import jwt
 from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Passlib 1.7's bcrypt adapter is incompatible with modern bcrypt releases.
+# PBKDF2-SHA256 remains a strong, portable password KDF for new accounts;
+# direct bcrypt verification preserves login compatibility for legacy hashes.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -14,6 +18,11 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
+    if password_hash.startswith(("$2a$", "$2b$", "$2y$")):
+        try:
+            return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        except (TypeError, ValueError):
+            return False
     return pwd_context.verify(password, password_hash)
 
 
