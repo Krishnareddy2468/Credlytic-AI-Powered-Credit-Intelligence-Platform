@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./app.db"
     ml_artifacts_dir: str = ""
     redis_url: str = "redis://localhost:6379/0"
+    qdrant_host: str = "localhost"
+    qdrant_port: int = 6333
+    qdrant_collection: str = "credit_policies"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_dim: int = 384
+    policies_dir: str = "data/policies"
     secret_key: str = "change-this-in-production"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7

@@ -7,6 +7,7 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import AsyncSessionLocal, engine
 from app.services.cards import seed_cards
+from app.core.qdrant import ensure_collection
 from app.services.eligibility import ModelUnavailableError, load_model
 
 settings = get_settings()
@@ -39,8 +40,11 @@ async def startup() -> None:
     try:
         load_model()
     except ModelUnavailableError as exc:
-        # The API still serves everything else; /eligibility/check returns 503.
         print(f"[startup] eligibility model unavailable: {exc}")
+    try:
+        ensure_collection()
+    except Exception as exc:
+        print(f"[startup] qdrant collection setup skipped: {exc}")
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
